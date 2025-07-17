@@ -19,19 +19,16 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
-
 		input = strings.TrimSpace(input)
 		if input == "" {
 			continue
 		}
-
 		if err := execInput(input); err != nil {
 			fmt.Fprintln(os.Stderr, "Execution error:", err)
 		}
 	}
 }
 
-// ErrNoPath is returned when 'cd' has no target.
 var ErrNoPath = errors.New("path required")
 
 func execInput(input string) error {
@@ -45,52 +42,51 @@ func execInput(input string) error {
 		if len(args) < 2 {
 			return ErrNoPath
 		}
-		return os.Chdir(normalizePath(args[1]))
+		newPath := addLongPathPrefix(args[1])
+		return os.Chdir(newPath)
+	case "exit":
+		os.Exit(0)
 	case "pwd":
 		dir, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		fmt.Println(dir)
+		fmt.Println(addLongPathPrefix(dir))
 		return nil
-	case "exit":
-		os.Exit(0)
 	}
 
-	// Decide whether the first token is a path or just a command name.
-	prog := args[0]
-	if strings.ContainsAny(prog, `\/`) {
-		prog = normalizePath(prog)
-	}
-
-	// Native execution first.
-	cmd := exec.Command(prog, args[1:]...)
-	cmd.Stdin = os.Stdin
+	// Try native execution
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Dir = addLongPathPrefixSafe()
 	if err := cmd.Run(); err == nil {
 		return nil
 	}
 
-	// Fallback: treat whole line as a PowerShell command.
-	ps := exec.Command("powershell",
-		"-NoProfile", "-NonInteractive", "-Command", input)
-	ps.Stdin = os.Stdin
-	ps.Stdout = os.Stdout
-	ps.Stderr = os.Stderr
-	return ps.Run()
+	// Fallback to PowerShell Core (pwsh)
+	psCmd := exec.Command("pwsh", "-NoProfile", "-NonInteractive", "-Command", input)
+	psCmd.Stdout = os.Stdout
+	psCmd.Stderr = os.Stderr
+	psCmd.Dir = addLongPathPrefixSafe()
+	return psCmd.Run()
 }
 
-// normalizePath converts any supplied path to an absolute Windows path
-// and unconditionally prefixes it with \\?\  (unless already present).
-func normalizePath(p string) string {
-	p = strings.Trim(p, `"'`) // strip quotes
-	abs, err := filepath.Abs(p)
-	if err != nil {
-		abs = p // fall back to original if Abs fails
+func addLongPathPrefix(path string) string {
+	if strings.HasPrefix(path, `\\?\`) {
+		return path
 	}
-	if strings.HasPrefix(abs, `\\?\`) {
-		return abs
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return path
 	}
 	return `\\?\` + abs
+}
+
+func addLongPathPrefixSafe() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "C:\\"
+	}
+	return addLongPathPrefix(dir)
 }
