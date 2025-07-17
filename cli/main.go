@@ -43,7 +43,6 @@ func execInput(input string) error {
 		return nil
 	}
 
-	// Handle built-in commands
 	switch args[0] {
 	case "cd":
 		if len(args) < 2 {
@@ -61,19 +60,17 @@ func execInput(input string) error {
 		return nil
 	}
 
-	// Try exec.Command directly
+	// Try native execution first
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	err := cmd.Run()
 	if err == nil {
 		return nil
 	}
 
-	// If it failed, try through PowerShell
-	powershellArgs := append([]string{"-Command"}, input)
-	psCmd := exec.Command("powershell", powershellArgs...)
+	// Fallback to PowerShell - safe, clean invocation
+	psCmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", input)
 	psCmd.Stdout = os.Stdout
 	psCmd.Stderr = os.Stderr
 	return psCmd.Run()
