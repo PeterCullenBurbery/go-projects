@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -19,26 +20,22 @@ func main() {
 			continue
 		}
 
-		// Trim newline and skip empty input
 		input = strings.TrimSpace(input)
 		if input == "" {
 			continue
 		}
 
-		// Execute the input line
 		if err := execInput(input); err != nil {
 			fmt.Fprintln(os.Stderr, "Execution error:", err)
 		}
 	}
 }
 
-// ErrNoPath is returned when 'cd' was called without a second argument.
+// ErrNoPath is returned when 'cd' has no target.
 var ErrNoPath = errors.New("path required")
 
 func execInput(input string) error {
-	input = strings.TrimSpace(input)
 	args := strings.Fields(input)
-
 	if len(args) == 0 {
 		return nil
 	}
@@ -46,11 +43,9 @@ func execInput(input string) error {
 	switch args[0] {
 	case "cd":
 		if len(args) < 2 {
-			return errors.New("path required")
+			return ErrNoPath
 		}
-		return os.Chdir(args[1])
-	case "exit":
-		os.Exit(0)
+		return os.Chdir(normalizePath(args[1]))
 	case "pwd":
 		dir, err := os.Getwd()
 		if err != nil {
@@ -58,20 +53,44 @@ func execInput(input string) error {
 		}
 		fmt.Println(dir)
 		return nil
+	case "exit":
+		os.Exit(0)
 	}
 
-	// Try native execution first
-	cmd := exec.Command(args[0], args[1:]...)
+	// Decide whether the first token is a path or just a command name.
+	prog := args[0]
+	if strings.ContainsAny(prog, `\/`) {
+		prog = normalizePath(prog)
+	}
+
+	// Native execution first.
+	cmd := exec.Command(prog, args[1:]...)
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err == nil {
+	if err := cmd.Run(); err == nil {
 		return nil
 	}
 
-	// Fallback to PowerShell - safe, clean invocation
-	psCmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", input)
-	psCmd.Stdout = os.Stdout
-	psCmd.Stderr = os.Stderr
-	return psCmd.Run()
+	// Fallback: treat whole line as a PowerShell command.
+	ps := exec.Command("powershell",
+		"-NoProfile", "-NonInteractive", "-Command", input)
+	ps.Stdin = os.Stdin
+	ps.Stdout = os.Stdout
+	ps.Stderr = os.Stderr
+	return ps.Run()
+}
+
+// normalizePath converts any supplied path to an absolute Windows path
+// and unconditionally prefixes it with \\?\  (unless already present).
+func normalizePath(p string) string {
+	p = strings.Trim(p, `"'`) // strip quotes
+	abs, err := filepath.Abs(p)
+	if err != nil {
+		abs = p // fall back to original if Abs fails
+	}
+	if strings.HasPrefix(abs, `\\?\`) {
+		return abs
+	}
+	return `\\?\` + abs
 }
