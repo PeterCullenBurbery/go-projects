@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -37,35 +36,45 @@ func main() {
 var ErrNoPath = errors.New("path required")
 
 func execInput(input string) error {
+	input = strings.TrimSpace(input)
 	args := strings.Fields(input)
+
 	if len(args) == 0 {
 		return nil
 	}
 
+	// Handle built-in commands
 	switch args[0] {
 	case "cd":
 		if len(args) < 2 {
-			return ErrNoPath
+			return errors.New("path required")
 		}
 		return os.Chdir(args[1])
 	case "exit":
 		os.Exit(0)
-	}
-
-	// If command includes a slash or backslash, treat as path
-	binary := args[0]
-	if strings.ContainsAny(binary, `\/`) {
-		abs, err := filepath.Abs(binary)
-		if err == nil {
-			if _, statErr := os.Stat(abs); statErr == nil {
-				binary = `\\?\` + abs
-			}
+	case "pwd":
+		dir, err := os.Getwd()
+		if err != nil {
+			return err
 		}
+		fmt.Println(dir)
+		return nil
 	}
 
-	cmd := exec.Command(binary, args[1:]...)
-	cmd.Stderr = os.Stderr
+	// Try exec.Command directly
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin // Allow interactive commands
-	return cmd.Run()
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err == nil {
+		return nil
+	}
+
+	// If it failed, try through PowerShell
+	powershellArgs := append([]string{"-Command"}, input)
+	psCmd := exec.Command("powershell", powershellArgs...)
+	psCmd.Stdout = os.Stdout
+	psCmd.Stderr = os.Stderr
+	return psCmd.Run()
 }
