@@ -16,26 +16,30 @@ func main() {
 		fmt.Print("> ")
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Input error:", err)
+			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
+
+		// Trim newline and skip empty input
 		input = strings.TrimSpace(input)
 		if input == "" {
 			continue
 		}
 
+		// Execute the input line
 		if err := execInput(input); err != nil {
 			fmt.Fprintln(os.Stderr, "Execution error:", err)
 		}
 	}
 }
 
+// ErrNoPath is returned when 'cd' was called without a second argument.
 var ErrNoPath = errors.New("path required")
 
 func execInput(input string) error {
-	args, err := splitArgs(input)
-	if err != nil || len(args) == 0 {
-		return err
+	args := strings.Fields(input)
+	if len(args) == 0 {
+		return nil
 	}
 
 	switch args[0] {
@@ -48,46 +52,20 @@ func execInput(input string) error {
 		os.Exit(0)
 	}
 
-	// Resolve absolute path and prepend \\?\ for long path support
+	// If command includes a slash or backslash, treat as path
 	binary := args[0]
-	absBinary, err := filepath.Abs(binary)
-	if err == nil {
-		binary = `\\?\` + absBinary
+	if strings.ContainsAny(binary, `\/`) {
+		abs, err := filepath.Abs(binary)
+		if err == nil {
+			if _, statErr := os.Stat(abs); statErr == nil {
+				binary = `\\?\` + abs
+			}
+		}
 	}
 
 	cmd := exec.Command(binary, args[1:]...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin // Allow interactive commands
 	return cmd.Run()
-}
-
-// splitArgs splits input into arguments respecting quoted substrings
-func splitArgs(input string) ([]string, error) {
-	var args []string
-	var current strings.Builder
-	inQuotes := false
-
-	for i := 0; i < len(input); i++ {
-		switch input[i] {
-		case '"':
-			inQuotes = !inQuotes
-		case ' ':
-			if inQuotes {
-				current.WriteByte(input[i])
-			} else if current.Len() > 0 {
-				args = append(args, current.String())
-				current.Reset()
-			}
-		default:
-			current.WriteByte(input[i])
-		}
-	}
-	if current.Len() > 0 {
-		args = append(args, current.String())
-	}
-	if inQuotes {
-		return nil, errors.New("unmatched quote")
-	}
-	return args, nil
 }
