@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	longPath := `\\?\C:\long-file-paths\SLALHxvTze\RRcnGFMT4b\D405pydQKV\5Pgy3yE4W7\o0s8CF942d\aO16Hmnkox\IV5rfDe3C9\Qw0MvV4WDb\W9tFG7ADJC\SrKGaCwRNQ\jxKIMaMkNS\AjR6EMdoS0\MuMgEU92Df\FZwd2QGuW2\dr06QAboY0\aw14j7DjJQ\bkUZqOXRl2\xhxwKiGiDO\bMiOKX9BCD\nnblvnjad2\Lykd8bASVA\It0zFMbCF9\tM0FrJsgfz\hello_world.exe`
+	longPath := `\\?\C:\long-file-paths\mSKuGP9gFX\ZfioqxCduF\EewaJDhlYK\8r4kgHrLFS\8EV918wFvX\x64D0YHG3G\k77o7QCq0x\DwEedEczG5\4gY9gRh8J0\aR9t5gANa8\8MgHxqVUZp\fnVWu6f1Th\IqfNeTCn6Y\0Qw1kIulol\ahehDwqU20\OtvSoKCOjL\1IkjZhqGLf\GRfIjrZjiZ\W0CINpwjlT\x2u1v5DVn2\9d7TFoMCcs\cgpwIxGtd1\OHTmuXve1s\hello_world.exe`
 
 	fmt.Println("== Path Information ==")
 	fmt.Printf("Path   : %s\n", longPath)
