@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -14,79 +13,54 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("> ")
+		// Read the keyboad input.
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			continue
 		}
-		input = strings.TrimSpace(input)
+
+		// Remove the newline character.
+		input = strings.TrimSuffix(input, "\n")
+
+		// Skip an empty input.
 		if input == "" {
 			continue
 		}
-		if err := execInput(input); err != nil {
-			fmt.Fprintln(os.Stderr, "Execution error:", err)
+
+		// Handle the execution of the input.
+		if err = execInput(input); err != nil {
+			fmt.Fprintln(os.Stderr, err)
 		}
 	}
 }
 
+// ErrNoPath is returned when 'cd' was called without a second argument.
 var ErrNoPath = errors.New("path required")
 
 func execInput(input string) error {
-	args := strings.Fields(input)
-	if len(args) == 0 {
-		return nil
-	}
+	// Split the input separate the command and the arguments.
+	args := strings.Split(input, " ")
 
+	// Check for built-in commands.
 	switch args[0] {
 	case "cd":
+		// 'cd' to home with empty path not yet supported.
 		if len(args) < 2 {
 			return ErrNoPath
 		}
-		newPath := addLongPathPrefix(args[1])
-		return os.Chdir(newPath)
+		// Change the directory and return the error.
+		return os.Chdir(args[1])
 	case "exit":
 		os.Exit(0)
-	case "pwd":
-		dir, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		fmt.Println(addLongPathPrefix(dir))
-		return nil
 	}
 
-	// Try native execution
+	// Prepare the command to execute.
 	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = os.Stdout
+
+	// Set the correct output device.
 	cmd.Stderr = os.Stderr
-	cmd.Dir = addLongPathPrefixSafe()
-	if err := cmd.Run(); err == nil {
-		return nil
-	}
+	cmd.Stdout = os.Stdout
 
-	// Fallback to PowerShell Core (pwsh)
-	psCmd := exec.Command("pwsh", "-NoProfile", "-NonInteractive", "-Command", input)
-	psCmd.Stdout = os.Stdout
-	psCmd.Stderr = os.Stderr
-	psCmd.Dir = addLongPathPrefixSafe()
-	return psCmd.Run()
-}
-
-func addLongPathPrefix(path string) string {
-	if strings.HasPrefix(path, `\\?\`) {
-		return path
-	}
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return path
-	}
-	return `\\?\` + abs
-}
-
-func addLongPathPrefixSafe() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "C:\\"
-	}
-	return addLongPathPrefix(dir)
+	// Execute the command return the error.
+	return cmd.Run()
 }
