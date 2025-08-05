@@ -12,12 +12,12 @@ After=network.target
 Requires=network.target
 
 [Service]
-User=peter
-Group=peter
-Environment=HADOOP_HOME=/home/peter/hadoop
+User=%s
+Group=%s
+Environment=HADOOP_HOME=${HOME}/hadoop
 Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ExecStart=/home/peter/hadoop/sbin/start-dfs.sh
-ExecStop=/home/peter/hadoop/sbin/stop-dfs.sh
+ExecStart=${HOME}/hadoop/sbin/start-dfs.sh
+ExecStop=${HOME}/hadoop/sbin/stop-dfs.sh
 Restart=on-failure
 RemainAfterExit=yes
 
@@ -31,12 +31,12 @@ After=network.target hadoop-hdfs.service
 Requires=hadoop-hdfs.service
 
 [Service]
-User=peter
-Group=peter
-Environment=HADOOP_HOME=/home/peter/hadoop
+User=%s
+Group=%s
+Environment=HADOOP_HOME=${HOME}/hadoop
 Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ExecStart=/home/peter/hadoop/sbin/start-yarn.sh
-ExecStop=/home/peter/hadoop/sbin/stop-yarn.sh
+ExecStart=${HOME}/hadoop/sbin/start-yarn.sh
+ExecStop=${HOME}/hadoop/sbin/stop-yarn.sh
 Restart=on-failure
 RemainAfterExit=yes
 
@@ -63,12 +63,25 @@ func runCommand(name string, args ...string) error {
 }
 
 func main() {
+	user := os.Getenv("SUDO_USER")
+	if user == "" {
+		user = os.Getenv("USER")
+	}
+
+	if user == "" {
+		fmt.Println("❌ Could not determine username. Run with sudo or set USER environment variable.")
+		return
+	}
+
 	fmt.Println("🔧 Writing systemd unit files...")
-	if err := writeUnitFile("hadoop-hdfs.service", hdfsUnit); err != nil {
+	hdfsContent := fmt.Sprintf(hdfsUnit, user, user)
+	yarnContent := fmt.Sprintf(yarnUnit, user, user)
+
+	if err := writeUnitFile("hadoop-hdfs.service", hdfsContent); err != nil {
 		fmt.Println("❌ Failed to write hadoop-hdfs.service:", err)
 		return
 	}
-	if err := writeUnitFile("hadoop-yarn.service", yarnUnit); err != nil {
+	if err := writeUnitFile("hadoop-yarn.service", yarnContent); err != nil {
 		fmt.Println("❌ Failed to write hadoop-yarn.service:", err)
 		return
 	}
