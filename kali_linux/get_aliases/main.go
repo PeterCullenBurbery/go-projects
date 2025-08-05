@@ -10,22 +10,22 @@ import (
 	"strings"
 )
 
-// getZshrcPath determines the path to the .zshrc file using $ZDOTDIR or $HOME
-func getZshrcPath() (string, error) {
-	zdotdir := os.Getenv("ZDOTDIR")
-	if zdotdir != "" {
-		return filepath.Join(zdotdir, ".zshrc"), nil
+// get_zshrc_path determines the path to the .zshrc file using $ZDOTDIR or $HOME
+func get_zshrc_path() (string, error) {
+	z_dot_dir := os.Getenv("ZDOTDIR")
+	if z_dot_dir != "" {
+		return filepath.Join(z_dot_dir, ".zshrc"), nil
 	}
 
-	usr, err := user.Current()
+	current_user, err := user.Current()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(usr.HomeDir, ".zshrc"), nil
+	return filepath.Join(current_user.HomeDir, ".zshrc"), nil
 }
 
-// parseAliases reads the file at zshrc_path and prints all alias definitions
-func parseAliases(zshrc_path string) error {
+// parse_aliases reads the file at zshrc_path and prints all alias definitions
+func parse_aliases(zshrc_path string) error {
 	file, err := os.Open(zshrc_path)
 	if err != nil {
 		return fmt.Errorf("error opening file: %w", err)
@@ -63,13 +63,13 @@ func parseAliases(zshrc_path string) error {
 }
 
 func main() {
-	zshrc_path, err := getZshrcPath()
+	zshrc_path, err := get_zshrc_path()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to determine .zshrc path: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := parseAliases(zshrc_path); err != nil {
+	if err := parse_aliases(zshrc_path); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to parse aliases: %v\n", err)
 		os.Exit(1)
 	}
