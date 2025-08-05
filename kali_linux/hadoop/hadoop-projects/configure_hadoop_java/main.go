@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	home, _ := os.UserHomeDir()
-	hadoop_env_path := filepath.Join(home, "hadoop", "etc", "hadoop", "hadoop-env.sh")
+	home_dir, _ := os.UserHomeDir()
+	hadoop_env_path := filepath.Join(home_dir, "hadoop", "etc", "hadoop", "hadoop-env.sh")
 	backup_path := hadoop_env_path + ".bak"
 
 	// Backup first
@@ -22,24 +22,25 @@ func main() {
 		fmt.Printf("🔁 Backed up %s → %s\n", hadoop_env_path, backup_path)
 	}
 
-	inputFile, err := os.Open(backup_path)
+	input_file, err := os.Open(backup_path)
 	if err != nil {
 		fmt.Printf("❌ Failed to open backup file: %v\n", err)
 		return
 	}
-	defer inputFile.Close()
+	defer input_file.Close()
 
-	outputFile, err := os.Create(hadoop_env_path)
+	output_file, err := os.Create(hadoop_env_path)
 	if err != nil {
 		fmt.Printf("❌ Failed to create updated file: %v\n", err)
 		return
 	}
-	defer outputFile.Close()
+	defer output_file.Close()
 
-	scanner := bufio.NewScanner(inputFile)
-	writer := bufio.NewWriter(outputFile)
+	scanner := bufio.NewScanner(input_file)
+	writer := bufio.NewWriter(output_file)
 
 	java_home_set := false
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, "# export JAVA_HOME=") && !java_home_set {
