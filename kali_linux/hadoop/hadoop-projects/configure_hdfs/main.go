@@ -103,8 +103,8 @@ func main() {
 
 	// Step 2: Create directories
 	fmt.Println("📁 Creating data directories...")
-	os.MkdirAll(name_dir, 0755)
-	os.MkdirAll(data_dir, 0755)
+	_ = os.MkdirAll(name_dir, 0755)
+	_ = os.MkdirAll(data_dir, 0755)
 
 	// Step 3: Check for running NameNode
 	fmt.Println("🛑 Checking for running NameNode...")
@@ -122,14 +122,18 @@ func main() {
 
 	// Step 5: Format HDFS
 	fmt.Println("🧹 Formatting HDFS...")
-	if err := run_command("hdfs", "namenode", "-format"); err != nil {
+	if err := run_command("hdfs", "namenode", "-format", "-force", "-nonInteractive"); err != nil {
 		fmt.Println("❌ Failed to format HDFS.")
 		return
 	}
 
-	// Step 6: Restart DFS
+	// Step 6: Restart DFS and YARN
 	fmt.Println("♻️ Restarting Hadoop DFS services...")
 	_ = run_command("start-dfs.sh")
 
+	fmt.Println("♻️ Starting YARN services...")
+	_ = run_command("start-yarn.sh")
+
 	fmt.Println("✅ HDFS reconfigured with persistent storage.")
+	fmt.Println("✅ HDFS reconfigured with persistent storage and YARN restarted.")
 }
