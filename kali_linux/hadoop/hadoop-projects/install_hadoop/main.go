@@ -14,19 +14,23 @@ func run_command(name string, args ...string) error {
 	return cmd.Run()
 }
 
-func append_to_bashrc(lines string) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
+func append_to_shell_rc(files []string, lines string) error {
+	for _, file := range files {
+		if _, err := os.Stat(file); err == nil {
+			f, err := os.OpenFile(file, os.O_APPEND|os.O_WRONLY, 0644)
+			if err != nil {
+				return fmt.Errorf("failed to open %s: %v", file, err)
+			}
+			defer f.Close()
+			if _, err := f.WriteString("\n" + lines + "\n"); err != nil {
+				return fmt.Errorf("failed to write to %s: %v", file, err)
+			}
+			fmt.Printf("✅ Updated %s\n", file)
+		} else {
+			fmt.Printf("⚠️  Skipped missing shell config: %s\n", file)
+		}
 	}
-	bashrc := filepath.Join(home, ".bashrc")
-	f, err := os.OpenFile(bashrc, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.WriteString("\n" + lines + "\n")
-	return err
+	return nil
 }
 
 func main() {
@@ -54,7 +58,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("🛠  Updating .bashrc with Hadoop environment variables...")
+	fmt.Println("🛠  Updating shell config files with Hadoop environment variables...")
 	env_vars := fmt.Sprintf(`# Hadoop environment variables
 export HADOOP_HOME=%s
 export HADOOP_INSTALL=$HADOOP_HOME
@@ -66,11 +70,16 @@ export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin`, hadoop_extract_path)
 
-	if err := append_to_bashrc(env_vars); err != nil {
-		fmt.Println("❌ Failed to update .bashrc.")
+	shell_rc_files := []string{
+		filepath.Join(home, ".bashrc"),
+		filepath.Join(home, ".zshrc"),
+	}
+
+	if err := append_to_shell_rc(shell_rc_files, env_vars); err != nil {
+		fmt.Println("❌ Failed to update shell config files.")
 		return
 	}
 
 	fmt.Println("✅ Hadoop downloaded and environment configured.")
-	fmt.Println("📢 Run 'source ~/.bashrc' or restart your terminal to apply the changes.")
+	fmt.Println("📢 Run 'source ~/.zshrc' or 'source ~/.bashrc' or restart your terminal to apply the changes.")
 }
