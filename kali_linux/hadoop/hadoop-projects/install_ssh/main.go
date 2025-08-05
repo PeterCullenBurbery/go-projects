@@ -7,15 +7,15 @@ import (
 	"path/filepath"
 )
 
-func run(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
+func run(command_name string, command_args ...string) error {
+	cmd := exec.Command(command_name, command_args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
+func file_exists(file_path string) bool {
+	_, err := os.Stat(file_path)
 	return err == nil
 }
 
@@ -29,16 +29,16 @@ func main() {
 		return
 	}
 
-	home, _ := os.UserHomeDir()
-	sshDir := filepath.Join(home, ".ssh")
-	privateKey := filepath.Join(sshDir, "id_rsa")
-	publicKey := filepath.Join(sshDir, "id_rsa.pub")
-	authKeys := filepath.Join(sshDir, "authorized_keys")
+	home_dir, _ := os.UserHomeDir()
+	ssh_dir := filepath.Join(home_dir, ".ssh")
+	private_key := filepath.Join(ssh_dir, "id_rsa")
+	public_key := filepath.Join(ssh_dir, "id_rsa.pub")
+	authorized_keys := filepath.Join(ssh_dir, "authorized_keys")
 
 	// 2. Generate SSH key if not present
-	if !fileExists(privateKey) || !fileExists(publicKey) {
+	if !file_exists(private_key) || !file_exists(public_key) {
 		fmt.Println("🔑 Generating new SSH key pair...")
-		if err := run("ssh-keygen", "-t", "rsa", "-P", "", "-f", privateKey); err != nil {
+		if err := run("ssh-keygen", "-t", "rsa", "-P", "", "-f", private_key); err != nil {
 			fmt.Println("❌ Failed to generate SSH key.")
 			return
 		}
@@ -47,31 +47,31 @@ func main() {
 	}
 
 	// 3. Ensure authorized_keys exists and append if needed
-	pubKeyContent, err := os.ReadFile(publicKey)
+	public_key_content, err := os.ReadFile(public_key)
 	if err != nil {
 		fmt.Printf("❌ Failed to read public key: %v\n", err)
 		return
 	}
 
-	os.MkdirAll(sshDir, 0700)
+	os.MkdirAll(ssh_dir, 0700)
 
-	authFile, err := os.OpenFile(authKeys, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	auth_file, err := os.OpenFile(authorized_keys, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		fmt.Printf("❌ Failed to open authorized_keys: %v\n", err)
 		return
 	}
-	defer authFile.Close()
+	defer auth_file.Close()
 
-	_, err = authFile.Write(pubKeyContent)
+	_, err = auth_file.Write(public_key_content)
 	if err != nil {
 		fmt.Printf("❌ Failed to write to authorized_keys: %v\n", err)
 		return
 	}
-	authFile.WriteString("\n")
+	auth_file.WriteString("\n")
 
 	// 4. Set correct permissions
 	fmt.Println("🔐 Setting permissions on authorized_keys...")
-	if err := os.Chmod(authKeys, 0600); err != nil {
+	if err := os.Chmod(authorized_keys, 0600); err != nil {
 		fmt.Printf("❌ Failed to chmod: %v\n", err)
 		return
 	}
@@ -85,5 +85,3 @@ func main() {
 
 	fmt.Println("✅ SSH passwordless setup complete.")
 }
-
-//Use snake case. only make necessary changes.
