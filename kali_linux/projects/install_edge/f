@@ -1,0 +1,148 @@
+Transcript started, output file is C:\GitHub-repositories\terminal-logs\powershell-007-logs\2025-008-009 007.017.040.0384033 America slash New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER backslash peter Powershell 7.5.2.txt
+2025-008-009 007.017.041.2338691 America/New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER\peter Powershell 7.5.2                                             C:\Users\peter\Desktop> # On Windows.                                                                                                                                                    >> powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"                                                                                                    Transcript started, output file is C:\GitHub-repositories\terminal-logs\powershell-005-logs\2025-008-009 007.017.046.8206344 America slash New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER backslash peter Powershell 5.1.26100.4768.txt                                                                                                             
+Downloading uv 0.8.8 (x86_64-pc-windows-msvc)
+Installing to C:\Users\peter\.local\bin
+  uv.exe
+  uvx.exe
+  uvw.exe
+everything's installed!
+
+To add C:\Users\peter\.local\bin to your PATH, either restart your shell or run:
+
+    set Path=C:\Users\peter\.local\bin;%Path%   (cmd)
+    $env:Path = "C:\Users\peter\.local\bin;$env:Path"   (powershell)
+Transcript started, output file is C:\GitHub-repositories\terminal-logs\powershell-007-logs\2025-008-009 007.018.003.8341343 America slash New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER backslash peter Powershell 7.5.2.txt
+Transcript started, output file is C:\GitHub-repositories\terminal-logs\powershell-007-logs\2025-008-009 007.018.003.8341343 America slash New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER backslash peter Powershell 7.5.2.txt
+2025-008-009 007.018.004.8394183 America/New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER\peter Powershell 7.5.2        
+C:\Users\peter\Desktop> uv self update
+info: Checking for updates...
+success: You're on the latest version of uv (v0.8.8)
+2025-008-009 007.018.012.8486984 America/New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER\peter Powershell 7.5.2        
+C:\Users\peter\Desktop> java C:\GitHub-repositories\time-stuff\java\time_stamp.java
+2025_008_009_009_053_004_668216400_America_slash_New_York_2025_W032_006_2025_221_1754747584_668216400
+2025-008-009 009.053.005.9058770 America/New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER\peter Powershell 7.5.2
+C:\Users\peter\Desktop> cat C:\GitHub-repositories\go-projects\kali_linux\projects\install_edge\main.go
+package main
+
+import (
+        "fmt"
+        "log"
+        "os/exec"
+        "runtime"
+        "strings"
+)
+
+func main() {
+        if runtime.GOOS != "linux" {
+                log.Fatal("This program only supports Linux.")
+        }
+
+        distro, err := detectDistro()
+        if err != nil {
+                log.Fatalf("Could not detect distro: %v", err)
+        }
+
+        fmt.Printf("Detected distro: %s\n", distro)
+
+        switch distro {
+        case "ubuntu", "debian", "kali":
+                installEdgeDebian()
+        case "fedora", "rhel", "centos":
+                installEdgeRHEL()
+        default:
+                log.Fatalf("Unsupported Linux distro: %s", distro)        
+        }
+}
+
+func detectDistro() (string, error) {
+        output, err := exec.Command("sh", "-c", `grep -E '^ID=' /etc/os-release | cut -d= -f2`).Output()
+        if err != nil {
+                return "", err
+        }
+        distro := strings.Trim(string(output), "\"\n")
+        return distro, nil
+}
+
+func installEdgeDebian() {
+        fmt.Println("Installing Microsoft Edge on Debian/Ubuntu...")      
+
+        commands := []string{
+                "sudo apt update",
+                "sudo apt install -y wget gnupg2 software-properties-common",
+                "sh -c \"wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | gpg --dearmor > microsoft.gpg\"",
+                "sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/",
+                "sudo sh -c \"echo 'deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main' > /etc/apt/sources.list.d/microsoft-edge.list\"",
+                "sudo apt update",
+                "sudo apt install -y microsoft-edge-stable",
+                "rm microsoft.gpg",
+        }
+
+        runCommands(commands)
+}
+
+func installEdgeRHEL() {
+        fmt.Println("Installing Microsoft Edge on Fedora/RHEL/CentOS...") 
+
+        commands := []string{
+                "sudo dnf install -y https://packages.microsoft.com/yumrepos/edge/microsoft-edge-stable.x86_64.rpm",
+        }
+
+        runCommands(commands)
+}
+
+func runCommands(commands []string) {
+        for _, cmd := range commands {
+                fmt.Printf("Running: %s\n", cmd)
+
+                var execCmd *exec.Cmd
+                if strings.ContainsAny(cmd, "|><") {
+                        execCmd = exec.Command("bash", "-c", cmd)
+                } else {
+                        parts := strings.Fields(cmd)
+                        execCmd = exec.Command(parts[0], parts[1:]...)    
+                }
+
+                execCmd.Stdin = nil
+                execCmd.Stdout = nil
+                execCmd.Stderr = nil
+
+                err := execCmd.Run()
+                if err != nil {
+                        log.Fatalf("Command failed: %s\nError: %v", cmd, err)
+                }
+        }
+        fmt.Println("Microsoft Edge installation completed.")
+}
+2025-008-009 009.056.050.7140430 America/New_York 2025-W032-006 2025-221 192.168.4.42 LANDINGCOMPUTER LANDINGCOMPUTER\peter Powershell 7.5.2        
+C:\Users\peter\Desktop> 
+
+edge needs to loop until it succeeds
+
+┌──(im_that_woman㉿kali-2025-008-008-021-059-012-451109500)-[~/…/GitHub-repositories/go-projects/kali_linux/projects]
+└─$ ./install_edge/install_edge 
+Detected distro: kali
+Installing Microsoft Edge on Debian/Ubuntu...
+Running: sudo apt update
+Running: sudo apt install -y wget gnupg2 software-properties-common
+Running: sh -c "wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | gpg --dearmor > microsoft.gpg"
+2025/08/09 09:09:37 Command failed: sh -c "wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | gpg --dearmor > microsoft.gpg"
+Error: exit status 2
+                                                                                                                                                                                                     
+┌──(im_that_woman㉿kali-2025-008-008-021-059-012-451109500)-[~/…/GitHub-repositories/go-projects/kali_linux/projects]
+└─$ ./install_edge/install_edge
+Detected distro: kali
+Installing Microsoft Edge on Debian/Ubuntu...
+Running: sudo apt update
+Running: sudo apt install -y wget gnupg2 software-properties-common
+Running: sh -c "wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | gpg --dearmor > microsoft.gpg"
+Running: sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+Running: sudo sh -c "echo 'deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main' > /etc/apt/sources.list.d/microsoft-edge.list"
+Running: sudo apt update
+Running: sudo apt install -y microsoft-edge-stable
+Running: rm microsoft.gpg
+Microsoft Edge installation completed.
+                                                                                                                                                                                                     
+┌──(im_that_woman㉿kali-2025-008-008-021-059-012-451109500)-[~/…/GitHub-repositories/go-projects/kali_linux/projects]
+└─$
+
+Update the program.
